@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "scrapvkdata"
+name = "scrap_vk_data"
 version = "0.1.0"
 description = ""
 authors = ["mikkegn <michail_gg@mail.ru>"]

@@ -70,30 +70,32 @@ def get_links_from_messages(html_file_path: Path) -> Generator[str, None, None]:
 def get_conversation_id_and_link(
     messages_dir: str,
 ) -> Generator[tuple[str, str], None, None]:
-    prev_conv_id = None
     for html_file_path in get_html_files_path(messages_dir):
         if 'index-messages.html' in html_file_path.parts:
             continue
         conversation_id = html_file_path.parts[-2]
-        if conversation_id != prev_conv_id:
-            typer.echo(f'Process {conversation_id}')
-
-        prev_conv_id = conversation_id
         for link in get_links_from_messages(html_file_path):
             yield conversation_id, link
 
 
 def get_dir_name(name_by_conv: dict[str, str], conversation_id: str) -> str:
     name = name_by_conv[conversation_id]
-    return f"{name}-{conversation_id}"
+    return f'{name}-{conversation_id}'
 
 
-def process_messages(messages_dir: str = IN_DIR, out_dir: str = OUT_DIR) -> None:
+def process_messages(
+    messages_dir: str = typer.Argument(
+        ..., help='Path to your messages directory in data copy'
+    ),
+    out_dir: str = typer.Argument(OUT_DIR, help='Path to save out data'),
+    threads: int = typer.Option(4, help="Number of parallel threads to save data")
+) -> None:
     start_time = time.monotonic()
     name_by_conv = get_name_by_conversation_map(messages_dir)
     prev_conversation_id = None
     index = 0
-    with ThreadPoolExecutor(max_workers=12) as executor:
+
+    with ThreadPoolExecutor(max_workers=threads) as executor:
         futures = []
         for conversation_id, link in get_conversation_id_and_link(messages_dir):
             if conversation_id != prev_conversation_id:
@@ -139,4 +141,4 @@ def get_name_by_conversation_map(messages_dir: str) -> dict:
     return mapping
 
 
-process_messages()
+typer.run(process_messages)
